@@ -66,7 +66,7 @@ def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
     @return:
     """
     search_hits = []
-
+    print(f'Search results :')
     for data in subs.data:
         near_matches = find_near_matches(search_string.lower(), data.text_without_tags.lower(), max_l_dist=1)
         if near_matches:
@@ -74,6 +74,7 @@ def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
                 'Fuzzy_Distance': near_matches[0].dist,
                 'Solid': data
             })
+            print( f'{data.text_without_tags}')
 
     if not search_hits:
         print(f"Could not find '{search_string}' in sub")
@@ -147,6 +148,7 @@ if __name__ == "__main__":
         check=True,
         stderr=subprocess.DEVNULL,
     )
+    print('GIFYING...')
 
     burn_subtitles(cmd_args, TIME_DURATION)
 
