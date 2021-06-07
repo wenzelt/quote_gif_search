@@ -6,8 +6,8 @@ import chardet
 import pysrt
 from pysrt import SubRipFile
 
-fps = "10"
-width = "480"
+FPS = "10"
+WIDTH = "480"
 
 
 def parse_args():
@@ -18,7 +18,7 @@ def parse_args():
     arg_parser.add_argument("--output_file", "-o", type=str, required=False)
     cmd_args = arg_parser.parse_args()
     if not cmd_args.output_file:
-        cmd_args.output_file = "outfile.mkv"
+        cmd_args.output_file = "outfile.gif"
     return cmd_args
 
 
@@ -32,7 +32,7 @@ def detect_encoding(subtitle_path: str) -> Dict[str, Union[float, str]]:
 def burn_subtitles(args: argparse.Namespace, time_duration: str):
     os.system(
         f"ffmpeg -i {output_path}sub_short.mp4  -t {time_duration} -y -filter_complex '[0:v] "
-        f"fps={fps},scale=w={width}:h=-1,split [a][b];[a]"
+        f"fps={FPS},scale=w={WIDTH}:h=-1,split [a][b];[a]"
         f"palettegen [p];[b][p] paletteuse=new=1' {output_path}{args.output_file}"
     )
 
@@ -67,7 +67,6 @@ def cut_subs(matched_subs, subs_pysrt, start_time):
 
 if __name__ == "__main__":
     cmd_args = parse_args()
-    # subs = parse_subtitle_file(cmd_args.subtitle)
 
     py_srt = pysrt.open(cmd_args.subtitle, encoding="iso-8859-1")
 
