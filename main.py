@@ -12,6 +12,7 @@ from pysrt import SubRipFile
 
 FPS = "10"
 WIDTH = "480"
+OUTPUT_PATH = "output/"
 
 
 def parse_args():
@@ -42,7 +43,7 @@ def detect_encoding(subtitle_path: str) -> Dict[str, Union[float, str]]:
         return result
 
 
-def burn_subtitles(args: argparse.Namespace, gif_length: str):
+def render_gif(args: argparse.Namespace, gif_length: str):
     """
 
     @param args:
@@ -66,24 +67,25 @@ def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
     @return:
     """
     search_hits = []
-    print(f'Search results :')
+    print("Search results :")
     for data in subs.data:
-        near_matches = find_near_matches(search_string.lower(), data.text_without_tags.lower(), max_l_dist=1)
+        near_matches = find_near_matches(
+            search_string.lower(), data.text_without_tags.lower(), max_l_dist=1
+        )
         if near_matches:
-            search_hits.append({
-                'Fuzzy_Distance': near_matches[0].dist,
-                'Solid': data
-            })
-            print( f'{data.text_without_tags}')
+            search_hits.append({"Fuzzy_Distance": near_matches[0].dist, "Solid": data})
+            print(f"{data.text_without_tags}")
 
     if not search_hits:
         print(f"Could not find '{search_string}' in sub")
         sys.exit(1)
 
-    return [min(search_hits, key=lambda x: x['Fuzzy_Distance']).get('Solid')]
+    return [min(search_hits, key=lambda x: x["Fuzzy_Distance"]).get("Solid")]
 
 
-def cut_subs(matched_text: list, subs_pysrt: SubRipFile, start_time: str) -> SubRipFile:
+def splice_subs(
+    matched_text: list, subs_pysrt: SubRipFile, start_time: str
+) -> SubRipFile:
     """
 
     @param matched_text:
@@ -106,14 +108,9 @@ def cut_subs(matched_text: list, subs_pysrt: SubRipFile, start_time: str) -> Sub
     return part
 
 
-def run_task(task, t):
-    s = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE)
-    t.write(s.stdout.readline().decode("utf-8"))
-
-
 if __name__ == "__main__":
     cmd_args = parse_args()
-    print(f'Parsing arguments : {cmd_args.video_file}, {cmd_args.subtitle}')
+    print(f"Parsing arguments : {cmd_args.video_file}, {cmd_args.subtitle}")
 
     encoding = detect_encoding(cmd_args.subtitle)
     print(f'Detected encoding : {encoding.get("encoding")}')
@@ -121,8 +118,8 @@ if __name__ == "__main__":
     py_srt = pysrt.open(cmd_args.subtitle, encoding=encoding.get("encoding"))
     search_term = cmd_args.find
     matched_subs = search_for_subtitle(py_srt, search_term)
-    print(f'Found some subtitles! {len(matched_subs)}')
-    SUBTITLE_START_TIME = str(
+    print(f"Found some subtitles! {len(matched_subs)}")
+    subtitle_match_start = str(
         int(
             matched_subs[0].start.hours * 3600
             + matched_subs[0].start.minutes * 60
@@ -131,25 +128,24 @@ if __name__ == "__main__":
         - 10
     )
 
-    py_srt = cut_subs(matched_subs, py_srt, SUBTITLE_START_TIME)
+    py_srt = splice_subs(matched_subs, py_srt, subtitle_match_start)
 
-    print(f'Cut subtitles, grabbed {len(py_srt)}')
-    py_srt.save("output/cut_subs.srt", encoding="utf-8")
+    print(f"Cut subtitles, grabbed {len(py_srt)}")
+    py_srt.save(f"{OUTPUT_PATH}cut_subs.srt", encoding="utf-8")
 
-    TIME_DURATION = "15"  # duration of clip
-    OUTPUT_PATH = "output/"
+    time_duration = "15"  # duration of clip
 
-    print('Cutting video down in small little pieces.')
+    print("Cutting video down in small little pieces.")
     subprocess.run(
-        f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
-        f"-vf subtitles=output/cut_subs.srt "
-        f" -t {TIME_DURATION} -y  {OUTPUT_PATH}sub_short.mp4",
+        f"ffmpeg -ss {subtitle_match_start} -i {cmd_args.video_file} "
+        f"-vf subtitles={OUTPUT_PATH}cut_subs.srt "
+        f" -t {time_duration} -y  {OUTPUT_PATH}sub_short.mp4",
         shell=True,
         check=True,
         stderr=subprocess.DEVNULL,
     )
-    print('GIFYING...')
+    print("GIFYING...")
 
-    burn_subtitles(cmd_args, TIME_DURATION)
+    render_gif(cmd_args, time_duration)
 
     print(f"Output Location:{cmd_args.output_file}")
