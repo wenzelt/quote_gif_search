@@ -13,6 +13,7 @@ from pysrt import SubRipFile
 FPS = "10"
 WIDTH = "480"
 OUTPUT_PATH = "output/"
+TIME_DURATION = "15"  # duration of clip
 
 
 def parse_args():
@@ -133,19 +134,18 @@ if __name__ == "__main__":
     print(f"Cut subtitles, grabbed {len(py_srt)}")
     py_srt.save(f"{OUTPUT_PATH}cut_subs.srt", encoding="utf-8")
 
-    time_duration = "15"  # duration of clip
 
     print("Cutting video down in small little pieces.")
     subprocess.run(
         f"ffmpeg -ss {subtitle_match_start} -i {cmd_args.video_file} "
         f"-vf subtitles={OUTPUT_PATH}cut_subs.srt "
-        f" -t {time_duration} -y  {OUTPUT_PATH}sub_short.mp4",
+        f" -t {TIME_DURATION} -y  {OUTPUT_PATH}sub_short.mp4",
         shell=True,
         check=True,
         stderr=subprocess.DEVNULL,
     )
     print("GIFYING...")
 
-    render_gif(cmd_args, time_duration)
+    render_gif(cmd_args, TIME_DURATION)
 
     print(f"Output Location:{cmd_args.output_file}")
