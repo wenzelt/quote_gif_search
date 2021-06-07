@@ -7,6 +7,7 @@ from typing import Union, Dict
 
 import chardet
 import pysrt
+from fuzzysearch import find_near_matches
 from pysrt import SubRipFile
 
 FPS = "10"
@@ -53,6 +54,7 @@ def burn_subtitles(args: argparse.Namespace, gif_length: str):
         f"palettegen [p];[b][p] paletteuse=new=1' {OUTPUT_PATH}{args.output_file}",
         shell=True,
         check=True,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -64,17 +66,23 @@ def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
     @return:
     """
     search_hits = []
+
     for data in subs.data:
-        if search_string.lower() in data.text_without_tags.lower():
-            search_hits.append(data)
-    if search_hits:
-        return search_hits
+        near_matches = find_near_matches(search_string.lower(), data.text_without_tags.lower(), max_l_dist=1)
+        if near_matches:
+            search_hits.append({
+                'Fuzzy_Distance': near_matches[0].dist,
+                'Solid': data
+            })
 
-    print(f"Could not find '{search_string}' in sub")
-    sys.exit(1)
+    if not search_hits:
+        print(f"Could not find '{search_string}' in sub")
+        sys.exit(1)
+
+    return [min(search_hits, key=lambda x: x['Fuzzy_Distance']).get('Solid')]
 
 
-def cut_subs(matched_text, subs_pysrt, start_time):
+def cut_subs(matched_text: list, subs_pysrt: SubRipFile, start_time: str) -> SubRipFile:
     """
 
     @param matched_text:
@@ -97,13 +105,22 @@ def cut_subs(matched_text, subs_pysrt, start_time):
     return part
 
 
+def run_task(task, t):
+    s = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE)
+    t.write(s.stdout.readline().decode("utf-8"))
+
+
 if __name__ == "__main__":
     cmd_args = parse_args()
-    encoding = detect_encoding(cmd_args.subtitle)
-    py_srt = pysrt.open(cmd_args.subtitle, encoding=encoding.get("encoding"))
+    print(f'Parsing arguments : {cmd_args.video_file}, {cmd_args.subtitle}')
 
+    encoding = detect_encoding(cmd_args.subtitle)
+    print(f'Detected encoding : {encoding.get("encoding")}')
+
+    py_srt = pysrt.open(cmd_args.subtitle, encoding=encoding.get("encoding"))
     search_term = cmd_args.find
     matched_subs = search_for_subtitle(py_srt, search_term)
+    print(f'Found some subtitles! {len(matched_subs)}')
     SUBTITLE_START_TIME = str(
         int(
             matched_subs[0].start.hours * 3600
@@ -115,20 +132,20 @@ if __name__ == "__main__":
 
     py_srt = cut_subs(matched_subs, py_srt, SUBTITLE_START_TIME)
 
+    print(f'Cut subtitles, grabbed {len(py_srt)}')
     py_srt.save("output/cut_subs.srt", encoding="utf-8")
-
-    print(f"where from:{cmd_args.video_file}")
-    print(f"where from:{cmd_args.subtitle}")
 
     TIME_DURATION = "15"  # duration of clip
     OUTPUT_PATH = "output/"
 
+    print('Cutting video down in small little pieces.')
     subprocess.run(
         f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
         f"-vf subtitles=output/cut_subs.srt "
         f" -t {TIME_DURATION} -y  {OUTPUT_PATH}sub_short.mp4",
         shell=True,
         check=True,
+        stderr=subprocess.DEVNULL,
     )
 
     burn_subtitles(cmd_args, TIME_DURATION)
