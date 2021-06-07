@@ -98,8 +98,8 @@ def cut_subs(matched_text, subs_pysrt, start_time):
 
 if __name__ == "__main__":
     cmd_args = parse_args()
-
-    py_srt = pysrt.open(cmd_args.subtitle, encoding="iso-8859-1")
+    encoding = detect_encoding(cmd_args.subtitle)
+    py_srt = pysrt.open(cmd_args.subtitle, encoding=encoding.get('encoding'))
 
     search_term = cmd_args.find
     matched_subs = search_for_subtitle(py_srt, search_term)
@@ -121,7 +121,6 @@ if __name__ == "__main__":
 
     TIME_DURATION = "15"  # duration of clip
     OUTPUT_PATH = "output/"
-    encoding = detect_encoding(cmd_args.subtitle)
 
     os.system(
         f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
