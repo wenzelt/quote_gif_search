@@ -1,8 +1,8 @@
 """This module converts local video and srt to gif."""
 
-
 import argparse
 import os
+import subprocess
 import sys
 from typing import Union, Dict
 
@@ -48,11 +48,14 @@ def burn_subtitles(args: argparse.Namespace, gif_length: str):
     @param args:
     @param gif_length:
     """
-    os.system(
-        f"ffmpeg -i {OUTPUT_PATH}sub_short.mp4  -t {gif_length} -y -filter_complex '[0:v] "
+    subprocess.run(f"ffmpeg -i {OUTPUT_PATH}sub_short.mp4  -t {gif_length} -y -filter_complex '[0:v] "
         f"fps={FPS},scale=w={WIDTH}:h=-1,split [a][b];[a]"
-        f"palettegen [p];[b][p] paletteuse=new=1' {OUTPUT_PATH}{args.output_file}"
-    )
+        f"palettegen [p];[b][p] paletteuse=new=1' {OUTPUT_PATH}{args.output_file}", shell=False, check=True)
+    # os.system(
+    #     f"ffmpeg -i {OUTPUT_PATH}sub_short.mp4  -t {gif_length} -y -filter_complex '[0:v] "
+    #     f"fps={FPS},scale=w={WIDTH}:h=-1,split [a][b];[a]"
+    #     f"palettegen [p];[b][p] paletteuse=new=1' {OUTPUT_PATH}{args.output_file}"
+    # )
 
 
 def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
@@ -115,18 +118,21 @@ if __name__ == "__main__":
     py_srt = cut_subs(matched_subs, py_srt, SUBTITLE_START_TIME)
 
     py_srt.save("output/cut_subs.srt", encoding="utf-8")
-    # subtitle_start_time = matched_subs[0].start
+
     print(f"where from:{cmd_args.video_file}")
     print(f"where from:{cmd_args.subtitle}")
 
     TIME_DURATION = "15"  # duration of clip
     OUTPUT_PATH = "output/"
 
-    os.system(
-        f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
-        f"-vf subtitles=output/cut_subs.srt "
-        f" -t {TIME_DURATION} -y  {OUTPUT_PATH}/sub_short.mp4"
-    )
+    subprocess.run(f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
+                   f"-vf subtitles=output/cut_subs.srt "
+                   f" -t {TIME_DURATION} -y  {OUTPUT_PATH}/sub_short.mp4", shell=False, check=True)
+    # os.system(
+    #     f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
+    #     f"-vf subtitles=output/cut_subs.srt "
+    #     f" -t {TIME_DURATION} -y  {OUTPUT_PATH}/sub_short.mp4"
+    # )
 
     burn_subtitles(cmd_args, TIME_DURATION)
 
