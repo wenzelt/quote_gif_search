@@ -11,6 +11,7 @@ ffmpeg = "*"
 install = "*"
 cchardet = "*"
 chardet = "*"
+pylint = "*"
 
 [dev-packages]
 
