@@ -1,7 +1,6 @@
 """This module converts local video and srt to gif."""
 
 import argparse
-import os
 import subprocess
 import sys
 from typing import Union, Dict
