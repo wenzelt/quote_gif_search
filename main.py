@@ -1,43 +1,13 @@
 import argparse
 import os
-from dataclasses import dataclass
-from datetime import time
 from typing import Union, Dict
 
 import chardet
 import pysrt
 from pysrt import SubRipFile
-from pysubparser import parser
-from pysubparser.cleaners import ascii, lower_case
 
 fps = "10"
 width = "480"
-
-@dataclass
-class Subtitle:
-    start_at: time
-    end_at: time
-    text: list
-    index: int
-    text_string: str
-
-
-def parse_subtitle_file(subtitle_path: str):
-    subtitles = ascii.clean(
-        lower_case.clean(parser.parse(subtitle_path, encoding="iso-8859-1"))
-    )
-    subs = []
-    for i in subtitles:
-        subs.append(
-            Subtitle(
-                start_at=i.start,
-                end_at=i.end,
-                text=i.lines,
-                index=i.index,
-                text_string=" ".join(i.lines),
-            )
-        )
-    return subs
 
 
 def parse_args():
