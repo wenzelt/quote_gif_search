@@ -1,6 +1,7 @@
 """This module converts local video and srt to gif."""
 
 import argparse
+import os
 import subprocess
 import sys
 from typing import Union, Dict
@@ -51,14 +52,9 @@ def burn_subtitles(args: argparse.Namespace, gif_length: str):
         f"ffmpeg -i {OUTPUT_PATH}sub_short.mp4  -t {gif_length} -y -filter_complex '[0:v] "
         f"fps={FPS},scale=w={WIDTH}:h=-1,split [a][b];[a]"
         f"palettegen [p];[b][p] paletteuse=new=1' {OUTPUT_PATH}{args.output_file}",
-        shell=False,
+        shell=True,
         check=True,
     )
-    # os.system(
-    #     f"ffmpeg -i {OUTPUT_PATH}sub_short.mp4  -t {gif_length} -y -filter_complex '[0:v] "
-    #     f"fps={FPS},scale=w={WIDTH}:h=-1,split [a][b];[a]"
-    #     f"palettegen [p];[b][p] paletteuse=new=1' {OUTPUT_PATH}{args.output_file}"
-    # )
 
 
 def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
@@ -70,7 +66,7 @@ def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
     """
     search_hits = []
     for data in subs.data:
-        if search_string in data.text_without_tags:
+        if search_string.lower() in data.text_without_tags.lower():
             search_hits.append(data)
     if search_hits:
         return search_hits
@@ -131,15 +127,10 @@ if __name__ == "__main__":
     subprocess.run(
         f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
         f"-vf subtitles=output/cut_subs.srt "
-        f" -t {TIME_DURATION} -y  {OUTPUT_PATH}/sub_short.mp4",
-        shell=False,
+        f" -t {TIME_DURATION} -y  {OUTPUT_PATH}sub_short.mp4",
+        shell=True,
         check=True,
     )
-    # os.system(
-    #     f"ffmpeg -ss {SUBTITLE_START_TIME} -i {cmd_args.video_file} "
-    #     f"-vf subtitles=output/cut_subs.srt "
-    #     f" -t {TIME_DURATION} -y  {OUTPUT_PATH}/sub_short.mp4"
-    # )
 
     burn_subtitles(cmd_args, TIME_DURATION)
 
