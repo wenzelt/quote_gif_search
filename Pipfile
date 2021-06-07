@@ -12,6 +12,7 @@ install = "*"
 cchardet = "*"
 chardet = "*"
 pylint = "*"
+fuzzysearch = "*"
 
 [dev-packages]
 
