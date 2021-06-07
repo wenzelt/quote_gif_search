@@ -16,15 +16,15 @@ def parse_args():
     arg_parser.add_argument("--subtitle", "-s", type=str, required=True)
     arg_parser.add_argument("--find", "-f", type=str, required=True)
     arg_parser.add_argument("--output_file", "-o", type=str, required=False)
-    cmd_args = arg_parser.parse_args()
-    if not cmd_args.output_file:
-        cmd_args.output_file = "outfile.gif"
-    return cmd_args
+    command_line_args = arg_parser.parse_args()
+    if not command_line_args.output_file:
+        command_line_args.output_file = "outfile.gif"
+    return command_line_args
 
 
 def detect_encoding(subtitle_path: str) -> Dict[str, Union[float, str]]:
-    with open(subtitle_path, "rb") as f:
-        msg = f.read()
+    with open(subtitle_path, "rb") as file:
+        msg = file.read()
         result = chardet.detect(msg)
         return result
 
@@ -93,7 +93,9 @@ if __name__ == "__main__":
     encoding = detect_encoding(cmd_args.subtitle)
 
     os.system(
-        f"ffmpeg -ss {subtitle_start_time} -i {cmd_args.video_file} -vf subtitles=output/cut_subs.srt  -t {time_duration} -y  {output_path}/sub_short.mp4"
+        f'ffmpeg -ss {subtitle_start_time} -i {cmd_args.video_file} '
+        f'-vf subtitles=output/cut_subs.srt '
+        f' -t {time_duration} -y  {output_path}/sub_short.mp4'
     )
 
     burn_subtitles(cmd_args, time_duration)
