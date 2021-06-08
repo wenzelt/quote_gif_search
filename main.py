@@ -97,10 +97,12 @@ def splice_subs(
     matched_sub = matched_text[0]
     part = subs_pysrt.slice(
         starts_after={
+            "hours": int(matched_sub.start.hours),
             "minutes": int(matched_sub.start.minutes),
             "seconds": int(matched_sub.start.seconds) - 10,
         },
         ends_before={
+            "hours": int(matched_sub.start.hours),
             "minutes": int(matched_sub.start.minutes),
             "seconds": int(matched_sub.start.seconds) + 10,
         },
