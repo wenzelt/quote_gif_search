@@ -85,7 +85,7 @@ def search_for_subtitle(subs: SubRipFile, search_string: str) -> list:
 
 
 def splice_subs(
-    matched_text: list, subs_pysrt: SubRipFile, start_time: str
+        matched_text: list, subs_pysrt: SubRipFile, start_time: str
 ) -> SubRipFile:
     """
 
@@ -109,6 +109,26 @@ def splice_subs(
     return part
 
 
+def cut_video(subtitle_match_timestamp, cli_args, time_duration, output_path):
+    """
+
+    @param subtitle_match_timestamp:
+    @param cli_args:
+    @param time_duration:
+    @param output_path:
+    """
+    print("Cutting video down in small little pieces.")
+    subprocess.run(
+        f"ffmpeg -ss {subtitle_match_timestamp} -i {cli_args.video_file} "
+        f"-vf subtitles={output_path}cut_subs.srt "
+        f" -t {time_duration} -y  {output_path}sub_short.mp4",
+        shell=True,
+        check=True,
+        stderr=subprocess.DEVNULL,
+    )
+    print("GIFYING...")
+
+
 if __name__ == "__main__":
     cmd_args = parse_args()
     print(f"Parsing arguments : {cmd_args.video_file}, {cmd_args.subtitle}")
@@ -120,7 +140,7 @@ if __name__ == "__main__":
     search_term = cmd_args.find
     matched_subs = search_for_subtitle(py_srt, search_term)
     print(f"Found some subtitles! {len(matched_subs)}")
-    subtitle_match_start = str(
+    SUBTITLE_MATCH_TIMESTAMP = str(
         int(
             matched_subs[0].start.hours * 3600
             + matched_subs[0].start.minutes * 60
@@ -129,22 +149,12 @@ if __name__ == "__main__":
         - 10
     )
 
-    py_srt = splice_subs(matched_subs, py_srt, subtitle_match_start)
+    py_srt = splice_subs(matched_subs, py_srt, SUBTITLE_MATCH_TIMESTAMP)
 
     print(f"Cut subtitles, grabbed {len(py_srt)}")
     py_srt.save(f"{OUTPUT_PATH}cut_subs.srt", encoding="utf-8")
 
-
-    print("Cutting video down in small little pieces.")
-    subprocess.run(
-        f"ffmpeg -ss {subtitle_match_start} -i {cmd_args.video_file} "
-        f"-vf subtitles={OUTPUT_PATH}cut_subs.srt "
-        f" -t {TIME_DURATION} -y  {OUTPUT_PATH}sub_short.mp4",
-        shell=True,
-        check=True,
-        stderr=subprocess.DEVNULL,
-    )
-    print("GIFYING...")
+    cut_video(SUBTITLE_MATCH_TIMESTAMP, cmd_args, TIME_DURATION, OUTPUT_PATH)
 
     render_gif(cmd_args, TIME_DURATION)
 
