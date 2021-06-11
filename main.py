@@ -50,6 +50,7 @@ def render_gif(args: argparse.Namespace, gif_length: str):
     @param args:
     @param gif_length:
     """
+    print("GIFYING...")
     subprocess.run(
         f"ffmpeg -i {OUTPUT_PATH}sub_short.mp4  -t {gif_length} -y -filter_complex '[0:v] "
         f"fps={FPS},scale=w={WIDTH}:h=-1,split [a][b];[a]"
@@ -128,7 +129,6 @@ def cut_video(subtitle_match_timestamp, cli_args, time_duration, output_path):
         check=True,
         stderr=subprocess.DEVNULL,
     )
-    print("GIFYING...")
 
 
 if __name__ == "__main__":
